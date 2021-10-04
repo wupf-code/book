@@ -1,0 +1,2525 @@
+例题6-1（TLE/WA）
+
+本题出现TLE的情况，因为在本题，我使用了太多的STL。在结果方面估计也会有些问题，因为对于lock/unlock的机制理解不清楚，现提出自己的错误代码。
+
+关于双端队列的用法可以参看点击打开链接
+
+#include<iostream>
+#include<sstream>
+#include<string>
+#include<cstring>
+#include<queue>
+#include<deque>
+#include<map>
+using namespace std;
+int main()
+{
+	//freopen("datain.txt","r",stdin);
+	//freopen("dataout.txt","w",stdout);
+	int m;
+	cin>>m;
+	while(m--)
+	{
+	queue<string> prog[15];
+	queue<int> lq;
+	deque<int> rq;
+	map<string,int> ot;//存储每个语句的执行时间 
+	int var[26];//存储变量
+	memset(var,0,sizeof(var));
+	int ap,qu,lockflag=0;//存储程序数量和一次执行程序的时间。 
+	cin>>ap>>ot["="]>>ot["print"]>>ot["lock"]>>ot["unlock"]>>ot["end"]>>qu;
+	for(int i=1;i<=ap;i++)
+	{
+		string s;
+		while(getline(cin,s)&&s!="end")
+		{
+			if(!s.empty()&&s!="\n")
+			{
+				prog[i].push(s);
+			}	
+		}
+		prog[i].push("end");
+		rq.push_back(i);
+	}
+	while(!rq.empty())
+	{
+		int rqf,time=qu,lqin=0;
+		rqf=rq.front();
+		rq.pop_front();
+		string stmp,rtmp[3],statement;
+		stmp=prog[rqf].front();
+		stringstream ss(stmp);
+		ss>>rtmp[0]>>rtmp[1]>>rtmp[2];
+		if(rtmp[1]=="=")
+		{
+			statement="=";
+		}
+		else
+		{
+			if(rtmp[0]=="print")
+			statement="print";
+			if(rtmp[0]=="lock")
+			statement="lock";
+			if(rtmp[0]=="unlock")
+			statement="unlock";
+			if(rtmp[0]=="end")
+			statement="end";	
+		}
+		int endflag=0;
+		while(time>=ot[statement]&&!prog[rqf].empty())
+		{
+			if(statement=="=")
+			{
+				stringstream ss(rtmp[2]);//字符串转int 
+				int itmp;//
+				ss>>itmp;
+				var[rtmp[0][0]-'a']=itmp;				
+				time-=ot["="];
+				prog[rqf].pop();	
+			}
+			if(statement=="print")
+			{
+				cout<<rqf<<": "<<var[rtmp[1][0]-'a']<<endl; 
+				
+				time-=ot["print"];
+				prog[rqf].pop();	
+			}
+			if(statement=="lock")
+			{
+				time-=ot["lock"];
+				if(lockflag==0)
+				{
+					lockflag=1;
+					prog[rqf].pop();	
+				}
+				else
+				{
+					lq.push(rqf);
+					lqin=1;	
+					break;
+				} 
+					
+			}
+			if(statement=="unlock")
+			{
+				time-=ot["unlock"];
+				prog[rqf].pop();
+				lockflag=0;
+				if(!lq.empty())
+				{
+					rq.push_front(lq.front());
+					lq.pop();
+				}			
+			}
+			if(rtmp[0]=="end")
+			{
+				time-=ot["end"];
+				prog[rqf].pop();
+				endflag=1;
+				break;	
+			}
+			stmp=prog[rqf].front();
+			rtmp[1].clear();
+			stringstream ss(stmp);
+			ss>>rtmp[0]>>rtmp[1]>>rtmp[2];
+			if(rtmp[1]=="=")
+			{
+				statement="=";
+			}
+			else
+			{
+			if(rtmp[0]=="print")
+			statement="print";
+			if(rtmp[0]=="lock")
+			statement="lock";
+			if(rtmp[0]=="unlock")
+			statement="unlock";
+			if(rtmp[0]=="end")
+			statement="end";	
+			}		
+		}
+		if(!endflag&&!lqin)
+		{
+			rq.push_back(rqf);		
+		}
+		
+	}	
+	cout<<endl;	
+	}
+   return 0;	 	
+} 
+例题6-2
+
+本题不多说，书中的分析和解法简洁明了。
+
+#include<iostream>
+#include<stack>
+using namespace std;
+const int maxn=1000;
+int main()
+{
+	//freopen("datain.txt","r",stdin);
+	//freopen("dataout.txt","w",stdout);
+	int len;
+	while(cin>>len&&len)
+	{
+		int da[maxn];
+		for(int i=0;i<len;i++)
+		{
+			da[i]=i+1;
+		}
+		int fir;
+		while(cin>>fir&&fir)
+		{
+			int dc[maxn];
+			stack<int> st;
+			dc[0]=fir;
+			for(int i=1;i<len;i++)
+			{
+				cin>>dc[i];
+			}
+			int a=0,c=0,flag=1;
+			while(c<len)
+			{
+				if(da[a]==dc[c])
+				{
+					a++;
+					c++;
+				}
+				else if(!st.empty()&&st.top()==dc[c])
+				{
+					c++;
+					st.pop();
+				}
+				else if(a<len)
+				{
+					st.push(da[a]);
+					a++;
+				}
+				else
+				{
+					flag=0;
+					break;
+				}
+				
+			}
+			if(flag)	
+			cout<<"Yes"<<endl;
+			else
+			cout<<"No"<<endl;		
+		}
+		cout<<endl;
+	}
+	return 0;
+} 
+例题6-3
+
+本题我采用map存储各个字母矩阵对应的行和列，而本题使用结构体来存行和列，用数字索引代替字母，具有一定的技巧性，而在中间过程的计算中，也直接不存中间过程的名字，只存储计算中间过程中的行和列。而我在中间过程中，将中间过程存储在map中。
+
+#include<iostream>
+#include<stack>
+#include<map>
+#include<string>
+#include<sstream>
+using namespace std;
+int main()
+{
+	//freopen("datain.txt","r",stdin);
+	//freopen("dataout.txt","w",stdout);
+	typedef pair<int,int> Pair;
+	map<string,Pair> ma;
+	int m;
+	cin>>m;
+	while(m--)
+	{
+		string c;
+		Pair rc;
+		cin>>c>>rc.first>>rc.second;
+		ma[c]=rc;
+	}
+	string s;
+	getline(cin,s);
+	//cout<<s<<endl;
+	while(getline(cin,s))
+	{
+		//cout<<s<<endl;
+		int ans=0,flag=1;
+		stack<string> sc;
+		for(int i=0;i<s.length();i++)
+		{
+			if(s[i]==')')
+			{
+				string a,b;
+				a=sc.top();
+				sc.pop();
+				b=sc.top();
+				sc.pop();
+				if(ma[a].first==ma[b].second)
+				{
+					ans+=ma[a].first*ma[a].second*ma[b].first;
+					Pair ab;
+					ab.first = ma[b].first;
+					ab.second = ma[a].second;
+					string sab= a+b;
+					ma[sab]=ab;
+					sc.push(sab);	
+				}
+				else
+				{
+					cout<<"error"<<endl;
+					flag=0;
+					break;
+				}
+				
+			}
+			else if(s[i]!='(')
+			{
+				stringstream ss;	
+				ss<<s[i];
+				string s1;
+				ss>>s1;
+				//cout<<s1;
+				sc.push(s1);
+			}	
+		}
+		if(flag)
+		cout<<ans<<endl;
+	}
+	
+	return 0;
+} 
+
+例题6-4
+
+本题目的写法非常经典，技巧很多，建议逐步运行实现。实现链表的方式，和使用指针实现的不一样，但是效率更高。实际上，思想就是在插入某个元素的时候，要保证上一个元素指向自己，而自己要指向下一个元素（可能为0）。实际上，实现了在上一个元素和光标之间的插入操作。
+
+#include<cstdio>
+#include<cstring>
+const int maxn=100000+5;
+int begin,last,pre,next[maxn];
+char s[maxn];
+int main()
+{
+	freopen("datain.txt","r",stdin);
+	while(scanf("%s",s+1)==1)
+	{
+		int n=strlen(s+1);
+		last=pre=0;
+		next[0]=0;
+		for(int i=1;i<=n;i++)
+		{
+			if(s[i]=='[')
+			{
+				pre=0;
+			}
+			else if(s[i]==']')
+			{
+				pre=last;
+			}
+			else
+			{
+				next[i]=next[pre];//cur存储的上一个元素的位置。 
+				next[pre]=i;//确定上一个元素的下一个元素的位置。 
+				if(pre==last) last=i;
+				pre=i;
+				
+			}
+		
+		}
+		for(int i=next[0];i!=0;i=next[i])
+		{	
+			if(s[i]!=']'&&s[i]!='[')		
+				printf("%c",s[i]);
+		}
+		printf("\n");		
+	}
+	return 0;
+} 
+例题6-5（TLE/uDebug测试全通过）
+
+本题我采用了双端链表，写的方式更像我们所学的数据结构那样，但是遭遇TLE，所有uDebug测试数据都通过。现在就不在纠结这道题了。如果要避免TLE，就要在源头上用最简单的数据结构存储，使用更加低级的操作。比如不要使用结构体，输入输出尽量使用C语言操作。我的写法感觉在算法上，已经不能够再精简了。
+
+#include<iostream>
+using namespace std;
+const int maxn=100000+5;
+struct Boxs
+{
+	long long  left;
+	long long  right;
+};
+int main()
+{	
+	//freopen("datain.txt","r",stdin);
+	//freopen("dataout.txt","w",stdout);
+	Boxs boxs[maxn]; 
+	long long m,n,rnd=1;
+	while(cin>>n>>m)
+	{
+		long long  sum=0; 
+		//初始化boxs
+		boxs[0].left=0;
+		boxs[0].right=1;
+		boxs[n+1].left=n;
+		boxs[n+1].right=0;
+		
+		for(long long i=1;i<=n;i++)
+		{
+			boxs[i].left=i-1;
+			boxs[i].right=i+1;	
+		} 
+		while(m--)
+		{
+			int t;
+			cin>>t;
+			if(t==1)
+			{
+				long long x,y;
+				cin>>x>>y;
+				
+				if(boxs[x].right!=y)
+				{
+					boxs[boxs[x].left].right=boxs[x].right;
+					boxs[boxs[x].right].left=boxs[x].left;
+					boxs[boxs[y].left].right=x;
+					boxs[x].left=boxs[y].left;
+					boxs[x].right=y;
+					boxs[y].left=x;	
+				}
+				
+			}
+			else if(t==2)
+			{
+				long long x,y;
+				cin>>x>>y;
+				if(boxs[y].right!=x)
+				{
+					boxs[boxs[x].left].right=boxs[x].right;
+					boxs[boxs[x].right].left=boxs[x].left;
+					boxs[boxs[y].right].left=x;
+					boxs[x].left=y;
+					boxs[x].right=boxs[y].right;
+					boxs[y].right=x;	
+				}
+					
+			}
+			else if(t==3)
+			{
+				long long x,y;
+				cin>>x>>y;
+				if(boxs[x].right!=y&&boxs[x].left!=y)
+				{
+				long long tmp;
+				boxs[boxs[x].right].left=y;
+				boxs[boxs[x].left].right=y;
+				boxs[boxs[y].right].left=x;
+				boxs[boxs[y].left].right=x;	
+				tmp=boxs[x].right;
+				boxs[x].right=boxs[y].right;
+				boxs[y].right=tmp;
+				tmp=boxs[x].left;
+				boxs[x].left=boxs[y].left;
+				boxs[y].left=tmp;	
+				}
+				else
+				{
+					if(boxs[x].right==y)
+					{
+						boxs[boxs[x].left].right=y;
+						boxs[boxs[y].right].left=x;	
+						boxs[y].left=boxs[x].left;
+						boxs[x].right=boxs[y].right;
+						boxs[y].right=x;
+						boxs[x].left=y;
+					}
+					else
+					{
+						boxs[boxs[x].right].left=y;
+						boxs[boxs[y].left].right=x;	
+						boxs[x].left=boxs[y].left;
+						boxs[y].right=boxs[x].right;
+						boxs[x].right=y;
+						boxs[y].left=x;	
+					}
+				}
+					
+			}
+			else if (t==4) 
+			{
+				long long tmp;
+				for(long long i=1;i<=n;i++)
+				{
+					tmp=boxs[i].left;
+					boxs[i].left=boxs[i].right;	
+					boxs[i].right=tmp;	
+				}
+					boxs[boxs[0].right].right=n+1;
+					boxs[boxs[n+1].left].left=0;
+					tmp=boxs[0].right;
+					boxs[0].right=boxs[n+1].left;
+				 	boxs[n+1].left=tmp;	 	
+			}
+						
+		}
+		
+			int j=1;
+			for(long long i=boxs[0].right;i!=0;i=boxs[i].right)
+			{
+				if(j%2==1&&boxs[i].right!=0)		
+					sum+=i;	
+					j++;
+			}
+			cout<<"Case "<<rnd++<<": "<<sum<<endl;
+	}
+	return 0;
+} 
+例题6-6
+
+本题目见书中分析，书中给出两段代码，第一段TLE，第二段AC，但是第一段非常容易理解，第一段可以理解为穷举。
+
+第一段：TLE
+
+#include<cstdio>
+#include<cstring>
+const int maxn= 20 ;
+int s[1<<maxn];//<<位运算，表示1*(2^maxn); 
+int main()
+{
+	int m;
+	scanf("%d",&m);
+	while(m--)
+	{
+		int D,I;
+	while(scanf("%d%d",&D,&I)==2)
+	{
+		memset(s,0,sizeof(s));
+		int k,n=(1<<D)-1;//n为最大节点编号. 
+		for(int i=0;i<I;i++)
+		{
+			k=1;
+			while(true)
+			{
+				s[k]= !s[k];
+				k=s[k]?2*k:2*k+1;//k是变化的，本来k为真，为右边。
+				//但是因为提前改变状态，所以k为假在右边。
+				if(k>n) break; //循环结束条件。  	
+			}
+			
+		}
+		printf("%d\n",k/2);
+	}	
+	}
+	
+	return 0;
+} 
+第二段：AC
+
+#include<cstdio>
+#include<cstring>
+int main()
+{
+	//freopen("datain.txt","r",stdin);
+	//freopen("dataout.txt","w",stdout);
+	long int D,I;
+	int m;
+	scanf("%d",&m);
+	while(m--)
+	{
+		while(scanf("%ld%ld",&D,&I)==2)
+		{
+			long int k=1;
+			for(int i=0;i<D-1;i++)
+			{
+				if(I%2)
+				{
+					k=k*2;
+					I=(I+1)/2;
+				}
+				else
+				{
+					k=k*2+1;
+					I/=2;
+				}	
+		    }
+		 printf("%d\n",k);	
+		}
+	
+	}
+	return 0;
+} 
+例题6-7
+
+本题就是典型的如果构建一个树，构建后进行宽度遍历（层次遍历）。主要注意对输入的处理方式，利用队列来进行树的宽度遍历。本题使用指针相对而言，比较好理解。
+#include<cstdio>
+#include<cstring>
+#include<queue>
+#include<vector>
+using namespace std;
+const int maxn=1000;
+struct Node
+{
+	bool have_value;
+	int v;
+	Node *left,*right;
+	Node():have_value(false),left(NULL),right(NULL){}
+};
+bool failed;
+Node* root;
+char s[maxn]; 
+//树节点的数据结构 
+ 
+//增加节点 
+Node* newnode()
+{
+	return new Node();
+}
+//构建树 
+void addnode(int v,char* s)
+{
+	int n = strlen(s);
+	Node* u = root; 
+	for(int i=0;i<n;i++)
+	{
+		if(s[i]=='L')
+		{
+			if(u->left==NULL) u->left = newnode();
+			u=u->left;
+		}
+		else if(s[i]=='R')
+		{
+			if(u->right==NULL) u->right = newnode();
+			u=u->right;	
+		}
+	}
+	if(u->have_value) failed=true;
+	u->v=v;
+	u->have_value=true;	
+}
+//输入处理 
+bool read_input()
+{
+	failed=false;
+	root=newnode();
+	for(;;)
+	{
+		if(scanf("%s",s)!=1) return false;
+		if(!strcmp(s,"()")) break;
+		int v;
+		sscanf(&s[1],"%d",&v);//字符输入可以类比stringstream 
+		addnode(v,strchr(s,',')+1);
+	}
+	return true;
+}
+//使用队列辅助实现层次遍历(宽度有限遍历)
+bool bfs(vector<int> &ans)
+{
+	queue<Node*> q;
+	ans.clear();
+	q.push(root);
+	while(!q.empty())
+	{
+		Node* u=q.front();q.pop();
+		if(!u->have_value) return false;
+		ans.push_back(u->v);
+		if(u->left!=NULL) q.push(u->left);
+		if(u->right!=NULL)q.push(u->right);
+	}
+	return true;
+} 
+//释放空间 
+void remove_tree(Node* u)
+{
+	if(u==NULL) return;
+	remove_tree(u->left);
+	remove_tree(u->right);
+	delete u;
+}
+ 
+ 
+int main()
+{
+	//freopen("datain.txt","r",stdin);
+	//freopen("dataout.txt","w",stdout);
+	while(read_input())
+	{
+		vector<int> ans;
+		if(failed)
+		{
+			printf("not complete");	
+		}
+		else if(bfs(ans))
+		{
+			for(vector<int>::iterator it= ans.begin();it!=ans.end();it++)
+			{
+				if(it==ans.end()-1)
+				{
+					printf("%d",*it);
+				}
+				else
+				{
+					printf("%d ",*it);
+				}
+				
+			}	
+		}
+		else
+		{
+			printf("not complete");
+		}
+		
+		printf("\n");
+		remove_tree(root);
+		
+	}
+	return 0;
+} 
+本书还介绍了其他几种，构建一个树的方法，但是我个人还是认为第一种方法更加简单和易于理解。
+
+现展示如下：
+
+//使用数组+下标的方式实现二叉树。
+const int root=1;
+void newtree()
+{ 
+	left[root]=right[root]=0;
+	have_value[root]=false;
+	cnt=root; 
+} 
+int newnode()
+{
+	int u=++cnt;
+	left[u]=right[u]=0;
+	have_value[u]=false;
+	return u;
+}
+//使用结构体+指针
+Node* newnode()
+{
+	Node * u = &node[cnt++];//将node[cnt++]的地址给u，意思是将u装入到node中,
+	//此时并不是直接随机给u一个地址，new Node();node数据的定义肯定是 Node node[maxn]。 
+	u->left=u->right=NULL;
+	u->have_value=false;
+	return u; 
+} 
+//内存池维护一个空闲列表  
+queue<Node*> freenodes;
+Node node[maxn];
+void init()
+{
+	for(int i=0;i<maxn;i++)
+	{
+		freenodes.push(&node[i]);
+	}
+} 
+Node* newnode()
+{
+	Node *u = freenodes.front();
+	freenodes.pop();
+	u->left=u->right=NULL;
+	u->have_value=false;
+	return u;
+}
+void deletenode(Node* u)
+{
+	freenodes.push(u);
+}
+//实际上，如果没有特殊要求，使用new动态申请空间，使用delete释放空间，就如同最开始代码中生成和删除节点的方法。 
+
+例题6-8
+
+本题先通过后序遍历和中序遍历构建二叉树，在通过深度优先遍历，从根到叶子搜索每一条路径，然后选取最小权的路径。数据结构采用的为两个数字lch和rch来存储根的左右子树，构造树和深度优先遍历都采用了递归的手段。下面的代码为书中代码，我补加了注释，便于大家理解。
+
+#include<iostream>
+#include<string>
+#include<sstream>
+#include<algorithm>
+using namespace std;
+ 
+const int maxv=10000+10;
+int in_order[maxv],post_order[maxv],lch[maxv],rch[maxv];
+int n;
+//读入数据函数 
+bool read_list(int *a)
+{
+	string line;
+	if(!getline(cin,line)) return false;
+	stringstream ss(line);
+	n=0;
+	int x;
+	while(ss>>x)
+	{
+		a[n++]=x;
+	}
+	
+	return n>0;
+}
+ 
+//递归构建构建树 
+int build(int L1,int R1,int L2,int R2)
+{
+	//L1为中序遍历的开头，R1为中序遍历的结尾
+	//L2为后序遍历的开头，R2为后序遍历的结尾
+	if(L1>R1) return 0;//判断结束条件。 
+	int root = post_order[R2];//循环寻找根位置 
+	//根的位置在后序遍历的最后一个。 
+	int p = L1;
+	while(in_order[p]!=root) p++;
+	int cnt = p-L1;//从中序遍历中获得左子树的节点数。 
+	lch[root] = build(L1,p-1,L2,L2+cnt-1); 
+	//lch[root]存储的为以root为根的左子树的根 
+	rch[root] = build(p+1,R1,L2+cnt,R2-1);
+	//rch[root]存储的为以root为根的右子树的根 
+	return root;
+} 
+ 
+int best,best_sum;
+//深度优先遍历。 
+void dfs(int u,int sum)
+{
+	sum+=u;
+	if(!lch[u]&&!rch[u])
+	//如果以u为根的左子树和右子树都为空，就是枚举出所有的解来比较。 
+	{
+		if(sum<best_sum||(sum==best_sum&&u<best))
+		//如果以u为根的左子树和右子树不为空。 寻找最小的sum 
+		{
+			best=u;
+			best_sum=sum;
+		}	
+	}
+	if(lch[u]) dfs(lch[u],sum);
+	if(rch[u]) dfs(rch[u],sum);	
+}
+//n为节点个数 
+int main()
+{
+	freopen("datain.txt","r",stdin);
+	while(read_list(in_order))
+	{
+		read_list(post_order);
+		build(0,n-1,0,n-1);
+		best_sum = 1000000000;
+		dfs(post_order[n-1],0);//深度优先遍历，给出根的位置。 
+		cout<<best<<endl;
+	}
+	return 0;
+} 
+
+例题6-9
+
+一开始对题目理解的不够完全，输出"YES"的条件为各个子天平都要平衡，而天平的权值为子天平权值的和。肯定是要采用递归的模式来进行。我的代码如下，比较好理解。但书中的代码更加精髓，我对书中代码进行了注释，便于理解学习。
+
+我的代码：
+
+#include<iostream>
+using namespace std;
+int sumwl=0,sumwr=0,flag=1;
+void readleft()
+{
+	int wl,dl,wr,dr;
+	cin>>wl>>dl>>wr>>dr;
+	sumwl=sumwl+wl+wr;
+	if(wl!=0&&wr!=0) 
+	{
+		if(wl*dl!=wr*dr)
+			flag=0;
+		return;
+	}
+	if(wl==0)
+	{
+		readleft();	
+	}
+	if(wr==0)
+	{
+	 	readleft();	
+	}
+	
+}
+ 
+void readright()
+{
+	int wl,dl,wr,dr;
+	cin>>wl>>dl>>wr>>dr;
+	sumwr=sumwr+wl+wr;
+	if(wl!=0&&wr!=0)
+	{
+		if(wl*dl!=wr*dr)
+			flag=0;
+		return;
+		
+	} 
+	if(wl==0)
+	{
+		readright();	
+	}
+	if(wr==0)
+	{
+	 	readright();	
+	}
+}
+ 
+ 
+int main()
+{
+	//freopen("datain.txt","r",stdin);
+	//freopen("dataout.txt","w",stdout);
+	int m;
+	cin>>m;
+	while(m--)
+	{
+		int wl,dl,wr,dr;
+		int suml,sumr;
+		cin>>wl>>dl>>wr>>dr;
+		if(wl==0)
+		{
+			readleft();
+		}
+		else
+		{
+			sumwl=wl;
+		}
+		if(wr==0)
+		{
+			readright();
+		}
+		else
+		{
+			sumwr=wr;
+		}
+		if(sumwl*dl==sumwr*dr&&flag)
+		{
+			cout<<"YES"<<endl;
+		}
+		else 
+		{
+			cout<<"NO"<<endl;
+		}
+		if(m!=0)
+		{
+			cout<<endl;
+		}
+		sumwl=sumwr=0;
+		flag=1;
+		
+	}
+	return 0;
+} 
+
+书中代码分析：
+首先，使用递归必须明确递归结束的条件，显然题目中结束的条件为W1不为0，则结束左子树的递归，当W2不为0，则结束右子树的递归。而我们感兴趣的是子树是不是平衡的和子树的权值总和，这样才能计算自己是否平衡，所以，书中代码使用b1和b2来确定左右子树是否平衡，使用W1*D1==W2*D2来确定自己是否平衡，而权值则通过引用进行传递W为权值和，W1为左子树的权值，W2为右子树的权值。
+
+#include<iostream>
+using namespace std;
+bool solve(int &W)
+{
+	int W1,D1,W2,D2;
+	bool b1=true,b2=true;
+	cin>>W1>>D1>>W2>>D2;
+	if(!W1) b1=solve(W1);
+	if(!W2) b2=solve(W2);
+	W=W1+W2;
+	return b1&&b2&&(W1*D1==W2*D2);
+}
+ 
+int main()
+{
+	//freopen("datain.txt","r",stdin);
+	//freopen("dataout.txt","w",stdout);
+	int T,W;
+	cin>>T;
+	while(T--)
+	{
+		if(solve(W)) cout<<"YES\n";
+		else cout<<"NO\n";
+		if(T) cout<<"\n";
+	}
+	return 0;
+}
+运用递归要明确两个要点，第一个是结束的条件，第二个是需要递归确定的值，比如本题中的权重，如果需要知道总的权值，那么就需要知道左右子树权值之和。那么可以递归下去，先求得最底层的权值，再返回向上，进行计算。
+
+例题6-10（uDebug测试数据通过，UVa RE）
+
+本题我的思路是先将这个二叉树看成完全二叉树。这样我们只要知道层数，那么我们就可以计算出根的位置，在根的左边就根的位置-1，根的右边就根的位置+1。然后输出就可以得到答案。
+
+#include<iostream>
+#include<cstring>
+using namespace std;
+const int maxn=1000000;
+int sumres[maxn];
+int sumn=1,cnt=1; 
+int lf[maxn],rt[maxn],value[maxn];
+ 
+void build(int root,int n)
+{
+	int tmpn=n,leftvalue,rightvalue;
+	cin>>leftvalue;
+	if(leftvalue!=-1)
+	{
+		tmpn++;
+		int left = ++cnt;
+		value[left]=leftvalue;
+		lf[root]=left;
+		if(tmpn>sumn)
+		sumn=tmpn;
+		build(left,tmpn);	
+	}
+	tmpn=n;
+	cin>>rightvalue;
+	if(rightvalue!=-1)
+	{
+		tmpn++;
+		int right = ++cnt;
+		value[right]=rightvalue;
+		rt[root]=right;
+		if(tmpn>sumn)
+		sumn=tmpn;
+		build(right,tmpn);
+	}
+	
+}
+ 
+ 
+void calres(int root,int code)
+{
+	sumres[code]+=value[root];
+	if(lf[root]!=-1)
+	{
+		calres(lf[root],code-1);
+	}
+	if(rt[root]!=-1)
+	{
+		calres(rt[root],code+1);	
+	}
+	
+	
+	
+}
+	
+int main()
+{
+	//freopen("datain.txt","r",stdin);
+	//freopen("dataout.txt","w",stdout);
+	int root,rootvalue,n=1,rnd=1;
+	cin>>rootvalue;
+	while(rootvalue!=-1)
+	{
+		memset(lf,-1,sizeof(lf));
+		memset(rt,-1,sizeof(rt));
+		memset(sumres,0,sizeof(sumres));
+		memset(value,0,sizeof(value));
+		cnt=1;
+		root=cnt;
+		value[root]=rootvalue;
+		sumn=1;
+		build(root,n);
+		int len;
+		if(sumn>2)
+		{
+			len=(1<<(sumn-1))+(1<<(sumn-2));
+			calres(root,(len/2));
+		}
+		else if(sumn==2)
+		{
+			calres(root,2);
+		}
+		else
+		sumres[1]=rootvalue;	
+		cout<<"Case "<<rnd++<<":"<<endl;
+		int flag=0;
+		for(int i=1;i<=len;i++)
+		{
+			if(sumres[i]!=0)
+			{
+				if(!flag)
+				{
+					cout<<sumres[i];
+					flag=1;
+				}
+				else
+				cout<<" "<<sumres[i];
+			}
+		
+		}
+	cout<<endl<<endl;	
+	cin>>rootvalue;	
+	}	
+	return 0;
+} 
+例题6-11
+
+本题一开始真不知道怎么做，所以借鉴了书中代码。我给书中的代码写了少许注释，以便于理解。
+
+#include<cstdio>
+#include<cstring>
+const int len=32;
+const int maxn=1024+10;
+char s[maxn];
+int buf[len][len],cnt;
+//本题目两张图在进行输入时候，将结果输入到buf中。
+//将图片视为32*32的一个图 ，并使用r和c对每个方框进行编号后
+//放入buf中。 
+//w表示现在递归中的ch表示的格子个数。 
+void draw(const char*s,int &p,int r,int c,int w)
+{
+	char ch = s[p++];
+	if(ch=='p')
+	{
+		draw(s,p,r,c+w/2,w/2);//1
+		draw(s,p,r,c,w/2);//2
+		draw(s,p,r+w/2,c,w/2);//3
+		draw(s,p,r+w/2,c+w/2,w/2);//4
+	}else if(ch=='f')
+	{
+		for(int i=r;i<r+w;i++)
+			for(int j=c;j<c+w;j++)
+				if(buf[i][j]==0)
+				{
+					buf[i][j]=1;cnt++;
+				}
+	}
+}
+int main()
+{
+	int T;
+	scanf("%d",&T);
+	while(T--)
+	{
+		memset(buf,0,sizeof(buf));
+		cnt=0;
+		for(int i=0;i<2;i++)
+		{
+			scanf("%s",s);
+			int p=0;
+			draw(s,p,0,0,len);
+		}
+		printf("There are %d black pixels.\n",cnt);
+	}
+	return 0;
+}
+
+例题6-12
+
+本题目主要是对八连块的理解，八连块和连通的数量没关系，只是表示可以上下左右斜上斜下等8个方向进行移动。通过dfs进行遍历，具体代码注释已经写好，可以参考学习。
+
+#include<cstdio>
+#include<cstring>
+const int maxn=100+5;
+char pic[maxn][maxn];
+int m,n,idx[maxn][maxn];
+ 
+void dfs(int r,int c,int id)
+{
+	if(r<0||r>=m||c<0||c>=n) return;
+	//行和列越界判断 
+	if(idx[r][c]>0||pic[r][c]!='@') return;
+	// idx[r][c]>0 表示已经被遍历过。 
+	// 节约时间，快速返回。 
+	idx[r][c]=id;
+	for(int dr=-1;dr<=1;dr++)
+	//dc和dr表示可以朝上下左右移动 
+		for(int dc=-1;dc<=1;dc++)
+			if(dr!=0||dc!=0) dfs(r+dr,c+dc,id);
+			//dr和dc不能同时为0，如果同时为0，则原地不动。 
+} 
+int main()
+{
+	while(scanf("%d%d",&m,&n)==2&&m&&n)//接收行和列 
+	{
+		for(int i=0;i<m;i++) scanf("%s",pic[i]);
+		//一行一行的接收，并存在一个字符串数组中。
+		//实际上是将输入数据存入pic数组中。 
+		memset(idx,0,sizeof(idx));
+		int cnt=0;
+		for(int i=0;i<m;i++)
+			for(int j=0;j<n;j++)
+				if(idx[i][j]==0&&pic[i][j]=='@') dfs(i,j,++cnt);
+			//每个@进行一次深度优先遍历。idx[i][j]表示还没有被遍历。
+			//意味着现阶段还没有加入其他八连块。 
+			printf("%d\n",cnt);
+	}
+	return 0;
+}
+例题6-13
+
+本题步骤：
+
+1． 先将输入的十六进制转化为二进制图像（先转化为十进制），其中0表示白色，1表示黑色。
+
+2． 因为每个字符图像是一个四连块，将图像进行dfs，并将各个字符图像并从1开始编号。
+
+3． 此时，图中的0，有些为空洞的0，有些为非空洞的0，判断每一个0的是否为空洞0，判断的方法为从元素为0的位置向上、向下、向左、向右搜索第一个大于0的元素，如果上下左右都相等且大于0，那么这个0元素就为空洞元素，否则为非空洞元素（判断是否在字符图像中），对从非空洞元素位置开始dfs，并标记为-1.这样就找到这张图中所有的空洞元素和非空洞元素。空洞元素标记为0.非空洞元素标记为-1.
+
+4． 将空洞元素进行dfs，找到每个空洞元素属于的字符图像，实际上为dfs的边界元素（边界元素就为开始标记的字符图像的编号）。
+
+5． 这样就可以通过每个字符图像的空洞数量来进行输出。
+
+6． 代码有具体注释，可供参考。
+
+#include<iostream>
+#include<cctype>
+#include<cstring>
+#include<algorithm>
+using namespace std;
+const int maxn=10000;
+int pic[maxn][maxn],idx[maxn][maxn];
+int r,c,bt;
+void dfs(int ir,int ic,int id)
+{
+	if(ir<0||ir>=r||ic<0||ic>=c) return;
+	if(idx[ir][ic]>0||pic[ir][ic]!=1) return;
+	idx[ir][ic]=id;
+	dfs(ir+1,ic,id);
+	dfs(ir-1,ic,id);
+	dfs(ir,ic+1,id);
+	dfs(ir,ic-1,id);	
+}
+void dfsz(int ir,int ic,int id)
+{
+	if(ir<0||ir>=r||ic<0||ic>=c) return;
+	if(idx[ir][ic]==-1||pic[ir][ic]!=0) return;
+	idx[ir][ic]=id;
+	dfsz(ir+1,ic,id);
+	dfsz(ir-1,ic,id);
+	dfsz(ir,ic+1,id);
+	dfsz(ir,ic-1,id);	
+}
+ 
+void dfsv1(int ir,int ic,int id)
+{
+	if(ir<0||ir>=r||ic<0||ic>=c) return;
+	if(idx[ir][ic]==id) return;
+	if(idx[ir][ic]>0)
+	{
+		bt=idx[ir][ic];
+		return;
+	}
+	idx[ir][ic]=id;
+	dfsv1(ir+1,ic,id);
+	dfsv1(ir-1,ic,id);
+	dfsv1(ir,ic+1,id);
+	dfsv1(ir,ic-1,id);	
+}
+int main()
+{
+	//freopen("datain.txt","r",stdin);
+	//freopen("dataout.txt","w",stdout);
+	char input[205][55];
+	int ans[100],rnd=1;
+	char code[]="WAKJSD";
+	while(cin>>r>>c&&r!=0&&c!=0)
+	{  
+		memset(idx,0,sizeof(idx));
+		memset(pic,0,sizeof(pic)); 
+		memset(ans,0,sizeof(ans));  
+		int m=0;
+		for(int i=0;i<r;i++) 
+		{
+			cin>>input[i];
+			int tmp,bi[4];
+			m=0;
+			for(int j=0;j<c;j++)
+			{
+				memset(bi,0,sizeof(bi));
+			//十六进制转化成十进制。
+				if(isdigit(input[i][j]))
+				{
+					tmp=input[i][j]-'0';
+				}
+				else
+				{
+					tmp=input[i][j]-'a'+10;
+				}
+		    //十进制转化成二进制。	
+				for(int n=3;n>=0;n--)
+				{
+					bi[n]=tmp%2;
+					tmp=tmp/2;
+					if(tmp==0) break;
+				}
+				for(int n=0;n<4;n++)
+				{
+					pic[i][m++]=bi[n];
+				}
+			}
+		}
+		c = m;//重新生成图片后的列数 
+    	int cnt=0;//字符的个数 
+		//通过dfs将所有字符进行编号 
+		for(int i=0;i<r;i++)
+		{
+			for(int j=0;j<c;j++)
+			{
+				if(pic[i][j]==1&&idx[i][j]==0)
+				{
+					dfs(i,j,++cnt);
+				}
+			}
+		}		
+//将pic中非空洞的0标注为-1，保证数空洞的时候不会数错。
+//搜索每一个为非空洞的0，并进行dfs进行-1.
+//判断每一个0点 
+	for(int i=0;i<r;i++)
+	{
+		for(int j=0;j<c;j++)
+		{
+			if(idx[i][j]==0)
+			{
+				int up=-1,down=-1,left=-1,right=-1;
+				//向上搜索
+				for(int m=i;m>=0;m--)
+				{
+					if(idx[m][j]>0)
+					{
+						up=idx[m][j];
+						break;
+					}
+						
+				}
+				//向下搜索
+				for(int m=i;m<r;m++)
+				{
+					if(idx[m][j]>0)
+					{
+						down=idx[m][j];
+						break;
+					}
+						
+				}
+				//向左搜索
+				for(int m=j;m>=0;m--)
+				{
+					if(idx[i][m]>0)
+					{
+						left=idx[i][m];	
+						break;
+					}
+					
+				}
+				//向右搜索
+				for(int m=j;m<c;m++)
+				{
+					if(idx[i][m]>0)
+					{
+						right=idx[i][m];
+						break;
+					}
+						
+				}
+				//如果上下左右都相等的话，为空点。
+				//否则不为空洞点。 
+				if(!(left==right&&left==up&&up==down&&left!=-1))
+				{
+					dfsz(i,j,-1);
+				}
+			  		
+			}							
+		}
+	}
+	
+//		for(int i=0;i<r;i++)
+//	{
+//		for(int j=0;j<c;j++)
+//		{
+//			cout<<idx[i][j]<<" ";
+//		}
+//		cout<<endl;
+//	}	
+//	
+	
+	
+		//数空洞的数量
+			int hcnt=-1;
+				for(int i=0;i<r;i++)
+				{
+					for(int j=0;j<c;j++)
+					{
+						if(idx[i][j]==0)
+						{
+							bt=0;
+							dfsv1(i,j,--hcnt);
+							ans[bt]++;
+						}
+					}
+				}
+				
+		char res[100];
+		
+		for(int i=1;i<=cnt;i++)
+		{
+			res[i]=code[ans[i]];
+		}
+		sort(res+1,res+cnt+1);
+		cout<<"Case "<<rnd++<<": ";
+		for(int i=1;i<=cnt;i++)
+		{
+			cout<<res[i];
+		}
+		 cout<<endl;
+		 
+			
+	}	
+	return 0;
+}
+
+例题6-14
+
+本题目将书中的代码补全，并进行了注释。书中进行判断是否前进的inside()函数，我不知道其中的含义，也没有写这个函数，UVa还是通过了。这里其实要注意的就是两个点1是存从初始状态到某个点的最短路长度，2是存BFS中的父节点。实际上，在进行BFS采用队列进行辅助。
+
+#include<iostream>
+#include<string>
+#include<cstring>
+#include<queue>
+#include<vector>
+using namespace std;
+const int maxn=100;
+const char* dirs="NESW";
+const char* turns="FLR";
+int d[maxn][maxn][4];
+int has_edge[maxn][maxn][4][3];
+int r0,c0,r1,c1,r2,c2,dir; 
+ 
+struct Node
+{
+	int r,c,dir;
+	Node(int r1=0,int c1=0,int dir1=0)
+	{
+		r=r1;
+		c=c1;
+		dir=dir1;
+	}
+	
+}; 
+ 
+Node p[maxn][maxn][4];
+ 
+int dir_id(char c)
+{
+	return strchr(dirs,c)-dirs;
+	//查找字符串dirs中首次出现字符c的位置
+}
+int turn_id(char c)
+{
+	return strchr(turns,c)-turns;
+}
+//根据当前状态和转弯方式计算出来的后续状态。 
+const int dr[]={-1,0,1,0};
+const int dc[]={0,1,0,-1};
+//dc实际上表示为列上面的走向。dr为行上面的走向 
+ 
+Node walk(const Node& u ,int turn)
+{
+	int dir=u.dir;
+	if(turn==1) dir=(dir+3)%4;//左转 
+	if(turn==2) dir=(dir+1)%4;//右转 
+	return Node(u.r+dr[dir],u.c+dc[dir],dir);
+}
+ 
+ 
+//从后到前的输出 
+void printf_ans(Node u)
+{
+	vector<Node> nodes;
+	for(;;)
+	{
+		nodes.push_back(u);
+		if(d[u.r][u.c][u.dir]==0) 
+		{
+			break;
+		}
+		u = p[u.r][u.c][u.dir];
+	}
+	//寻找父节点 
+	nodes.push_back(Node(r0,c0,dir));
+	int cnt = 10;
+	for(int i=nodes.size()-1;i>=0;i--)
+	{
+		if(cnt%10==0) printf(" ");
+		printf(" (%d,%d)",nodes[i].r,nodes[i].c);
+		if(++cnt%10==0)
+		printf("\n");
+	}
+	if(nodes.size()%10!=0) printf("\n");
+}
+ 
+ 
+//has_edge是一个四维数组 
+void solve()
+{
+	queue<Node> q;
+	memset(d,-1,sizeof(d));
+	Node u(r1,c1,dir);//起点 
+	d[u.r][u.c][u.dir]=0;
+	//初始状态到(r,c,dir)的最短路径 
+	q.push(u);//然后将u压入栈内 
+	while(!q.empty())//层次遍历是否结束 
+	{
+		Node u = q.front();
+		q.pop();
+		if(u.r==r2 && u.c==c2)//表示如果u已经到达终点 
+		{
+			printf_ans(u);//输出 
+			return;
+		}
+		for(int i=0;i<3;i++)//3个方向 
+		{
+			Node v = walk(u,i);
+			if(has_edge[u.r][u.c][u.dir][i]&&d[v.r][v.c][v.dir]<0)
+			//has_edge表示这种前进方式是否能够进入。d[v.r][v.c][v.dir]表示还没有到达这个点.
+			{
+				d[v.r][v.c][v.dir]=d[u.r][u.c][u.dir]+1;
+				p[v.r][v.c][v.dir]=u;
+				q.push(v);
+			} 
+		}
+	}
+	printf("  No Solution Possible\n");
+}
+ 
+ 
+int main()
+{
+	//freopen("datain.txt","r",stdin);
+	//freopen("dataout.txt","w",stdout);
+	string name;
+	char cdir;
+	while(cin>>name&&name!="END")
+	{
+		cout<<name<<endl;
+		memset(has_edge,0,sizeof(has_edge));
+		cin>>r0>>c0>>cdir>>r2>>c2;
+		dir=dir_id(cdir);
+		r1=r0+dr[dir];
+		c1=c0+dc[dir];
+		int tmpr,tmpc;
+		while(cin>>tmpr&&tmpr)
+		{
+			cin>>tmpc;
+			char tmp;
+			int tmpdt1i,tmpdt2i;		
+			while(cin>>tmp&&tmp!='*')
+			{
+				if(tmp=='N'||tmp=='E'||tmp=='W'||tmp=='S')
+				{
+					tmpdt1i=dir_id(tmp);	
+				}
+				if (tmp=='L'||tmp=='R'||tmp=='F')
+				{
+					tmpdt2i=turn_id(tmp);
+					has_edge[tmpr][tmpc][tmpdt1i][tmpdt2i]=1;		
+				}
+				
+			}
+		}
+		solve();
+	}	
+	return 0;
+} 
+
+例题6-15
+
+本题使用DFS进行拓扑排序，是一个经典的写法。其思想就是，在一个无环有向图中，先找到拓扑排序中的最后一个点，最后一个点满足的条件就是它的执行不会影响到其他任务。也就是说别人只会影响它，它不会影响别人。迭代进行就可以求得拓扑排序。代码中有注释，但是如果算法还是理解不了，可以百度DFS+拓扑排序。很多网页提供更加详尽的解释。
+
+#include<cstdio>
+#include<cstring>
+const int maxn=100+5;
+//c数组，0表示从未访问过，1表示已经访问并递归过它的子孙。
+//-1表示正在访问。
+int c[maxn]; 
+int topo[maxn],t,n;
+int G[maxn][maxn]; 
+bool dfs(int u)
+{
+	c[u]=-1;
+	for(int v=1;v<=n;v++)
+	{
+		if(G[u][v])
+		//采用邻接矩阵存储图，表示u有指向v的边，表示u完成后v才能完成。 
+		{
+			if(c[v]<0) return false;//判断是否有环的存在 
+			else if (!c[v]&&!dfs(v)) return false;
+			//如果v已经被访问过，则退出。
+			//如果没有访问，就进行深度遍历，进行访问。 
+		}
+		
+	}
+	c[u]=1;topo[--t]=u;
+	return true;
+}
+bool toposort()
+{
+	t=n;
+	memset(c,0,sizeof(c));
+	for(int u=1;u<=n;u++)
+	{
+		if(!c[u])//没有进行访问的才进行访问 
+		{
+			if(!dfs(u)) return false;
+		}
+	}
+	return true;
+}
+	
+int main()
+{
+	//freopen("datain.txt","r",stdin);
+	//freopen("dataout.txt","w",stdout);
+	int m;
+	while(scanf("%d%d",&n,&m)&&n)
+	{
+		memset(G,0,sizeof(G));
+		while(m--)
+		{
+			int i,j;
+			scanf("%d%d",&i,&j);
+			G[i][j]=1;
+		}	
+		toposort();
+		for(int i=0;i<n;i++)
+		{
+			printf("%d",topo[i]);
+			if(i<n-1)
+			printf(" ");
+		}
+		printf("\n");		
+	}
+	
+	return 0;
+}
+例题6-16
+
+通过存在欧拉回路的条件进行判断，再使用dfs来判断是否连通。
+
+#include<iostream>
+#include<string>
+#include<cstring>
+using namespace std;
+const int maxn=30;
+int G[maxn][maxn],visit[maxn],od[maxn],id[maxn];
+void dfs(int s)
+{
+	visit[s]=-1;
+	for (int i=0;i<maxn;i++)
+	{
+		if(G[s][i]==1&&!visit[i])
+		{
+			dfs(i);
+		}
+	}
+	
+	
+}
+int check()
+{
+	int flag=1;
+	for(int i=0;i<maxn;i++)
+	{
+		if(visit[i]==0)
+		{
+			flag=0;
+			return flag;
+		}
+	}
+	return flag;
+}
+int eulerroot()
+{
+	int start=-1,end=-1,first;
+	for(int i=0;i<maxn;i++)
+	{
+		int tmp;
+		if(od[i]!=0)
+		{
+			first=i;
+		}
+		tmp=od[i]-id[i];
+		if(tmp==1)
+		{
+			if(start==-1)
+				start=i;
+			else
+				return -1;	
+		}
+		else if(tmp==-1)
+		{
+			if(end==-1)
+				end=i;
+			else
+				return -1;
+		}
+		else if(tmp!=0)
+		{
+			return -1;
+		}	
+	}
+	if(start==-1)
+	{
+		return first;
+	}
+	return start;
+}
+int main()
+{
+	//freopen("datain.txt","r",stdin);
+	//freopen("dataout.txt","w",stdout);
+	int m;
+	cin>>m;
+	while (m--)
+	{	
+		memset(G,0,sizeof(G));
+		memset(od,0,sizeof(od));
+		memset(id,0,sizeof(id));
+		memset(visit,-1,sizeof(visit));
+		int n,start;
+		cin>>n;
+		while(n--)
+		{
+			string tmp;
+			cin>>tmp;
+			int r,c;
+			r=tmp[0]-'a';
+			c=tmp[tmp.length()-1]-'a';
+			G[r][c]=1;
+			visit[r]=0;
+			visit[c]=0;
+			od[r]++;
+			id[c]++;
+		}
+			start=eulerroot();
+			if(start==-1)
+				cout<<"The door cannot be opened."<<endl;
+			else
+			{
+				dfs(start);	
+				int flag=check();
+				if(flag)
+				{
+					cout<<"Ordering is possible."<<endl;
+				}
+				else
+					cout<<"The door cannot be opened."<<endl;	
+			}	
+	}
+	return 0;
+} 
+
+例题6-17
+
+本题目的难点还是在对输入数据的处理上，难点并不在数据结构，书中的代码也易于理解。
+
+#include<cstdio>
+#include<cctype>
+#include<cstring>
+const int maxn =200+10;
+int n;
+char buf[maxn][maxn];
+void dfs(int r,int c)
+{
+	printf("%c(",buf[r][c]);
+	if(r+1<n&&buf[r+1][c]=='|')//n为buf的总行数,这句话表示有子树 
+	{
+		int i=c;
+		while(i-1>=0&&buf[r+2][i-1]=='-') i--;//找到---的左边界 
+		while(buf[r+2][i]=='-'&&buf[r+3][i]!='\0')
+		{
+			if(!isspace(buf[r+3][i])) dfs(r+3,i);
+			i++;
+		}
+	}
+	printf(")");
+} 
+ 
+void solve()
+{
+	n=0;
+	for(;;)
+	{
+		fgets(buf[n],maxn,stdin);
+		if(buf[n][0]=='#') break; else n++;
+	}
+	printf("(");
+	if(n)
+	{
+		for(int i=0;i<strlen(buf[0]);i++)
+			if(buf[0][i]!=' ')
+			{
+				dfs(0,i);break;
+			}
+	}
+	printf(")\n");
+}
+int main()
+{
+	//freopen("datain.txt","r",stdin);
+	int T;
+	fgets(buf[0],maxn,stdin);
+	sscanf(buf[0],"%d",&T);
+	while(T--) solve();
+	return 0;
+}
+
+例题6-20
+
+本题书中数相当重要使用了两次BFS，具体详细的分析和解释可以参考。
+
+点击打开链接
+
+写的很详细。我将他的代码贴在下面。另外本题采用BFS采用邻接表的形式，数据结构中可以使用邻接表和邻接矩阵存图，具体将会在第六章的总结中呈现。
+
+#include<cstdio>
+#include<vector>
+#include<queue>
+#include<cstring> 
+using namespace std; //min()函数 
+#define max 100000
+#define inf 0x7fffffff
+typedef struct ver{
+    int num, color;//边的另一端的节点编号 和 颜色 
+    ver(int n,int c):num(n),color(c){}
+}Ver;
+int n,m,a,b,c;
+int d[max],res[max];//d记录每个点到终点的最短距离 res记录最短路的颜色
+bool vis[max],inqueue[max];//vis每个节点是否被访问过 inqueue标记节点是否加入了队列，防止重复加入 
+vector<Ver> edge[max];//邻接表记录图 
+void bfs(int start,int end){
+    memset(inqueue,0,n);
+    memset(vis,0,n);
+    int u,v,c;
+    queue<int> q;
+    q.push(start);
+    if(start==0){//用于正向bfs 
+        memset(res,0,sizeof(int)*n);
+        while(!q.empty()){
+            u=q.front();q.pop();vis[u]=1;
+            if(u==n-1)return;
+            int minc=inf,len=edge[u].size();
+            for(int i=0;i<len;i++)if(!vis[v=edge[u][i].num] && d[u]-1==d[v])minc=min(edge[u][i].color,minc);//获取所有路径中最小的颜色
+            for(int i=0;i<len;i++)if(!vis[v=edge[u][i].num] && d[u]-1==d[v] && edge[u][i].color==minc && !inqueue[v])q.push(v),inqueue[v]=1; //若有多组颜色相同,且未入队，则将其入队 
+            int index=d[0]-d[u];//获得当前步数对应的下标
+            if(res[index]==0)res[index]=minc;
+            else res[index]=min(res[index],minc);//获取最小颜色 
+        }
+    }//用于反向bfs 构建层次图，找最短路 
+    else while(!q.empty()){
+        u=q.front();q.pop();vis[u]=1;
+        for(int i=0,len=edge[u].size();i<len;i++)if(!vis[v=edge[u][i].num] && !inqueue[v]){ 
+            d[v]=d[u]+1; //一定是头一次入队，这通过inqueue保证 
+            if(v==0)return; //找到起点，退出 
+            q.push(v);//如果不是起点，就把这个点入队 
+            inqueue[v]=1;//入队标记 
+        }
+    }
+}
+int main(){
+    while(scanf("%d%d",&n,&m)==2){
+        for(int i=0;i<n;i++)edge[i].clear();
+        memset(d,-1,sizeof(int)*n);d[n-1]=0;//注意初始化的细节
+        while(m--){
+            scanf("%d%d%d",&a,&b,&c);
+            if(a!=b){ //排除自环
+                edge[a-1].push_back(ver(b-1,c));
+                edge[b-1].push_back(ver(a-1,c));
+            }
+        }
+        bfs(n-1,0);//反向bfs
+        bfs(0,n-1);//正向bfs 
+        printf("%d\n%d",d[0],res[0]);
+        for(int i=1;i<d[0];i++)printf(" %d",res[i]);
+        printf("\n");
+    }
+}
+
+例题6-1
+
+本题就是一个栈的使用，一定要注意输入的格式问题。
+
+#include<iostream>
+#include<stack>
+#include<string>
+using namespace std;
+int main()
+{
+	//freopen("datain.txt","r",stdin);
+	//freopen("dataout.txt","w",stdout);
+	int n;
+	cin>>n;
+	getchar();
+	while(n--)
+	{
+		stack<char> sc;
+		while(sc.size()) sc.pop();
+		string s;
+		getline(cin,s);
+		bool flag = true;
+		for(int i=0;i<s.length();i++)
+		{
+			if(s[i]=='('||s[i]=='[')
+			{
+				sc.push(s[i]);
+			}
+		   	else if (!sc.empty()&&((s[i]==']'&&sc.top()=='[')||(s[i]==')'&&sc.top()=='(')))
+			   {
+			   		sc.pop();
+			   }
+			else
+			{
+				flag=false;
+				break;
+			}
+			  	
+	   }
+		if(sc.empty()&&flag)
+			cout<<"Yes"<<endl;
+		else
+			cout<<"No"<<endl;
+	}
+	return 0;
+} 
+
+习题6-2
+
+本题第一眼看是树，实际上和树关系不大，根据题意，我们可以知道在叶子节点分别可以编号成十进制的0-2^n,n为树深度，那么再根据输入的编码和树中给出的顺序进行一一对应，这样就输入的编码转化为10进制，直接就能得出答案。
+
+#include<iostream>
+#include<string>
+#include<cstring>
+using namespace std;
+const int maxn=1000;
+int main()
+{
+	int n,rnd=1;
+	//freopen("datain.txt","r",stdin);
+	//freopen("dataout.txt","w",stdout);
+	while(cin>>n&&n)
+	{
+		cout<<"S-Tree #"<<rnd++<<":"<<endl;
+		int res[maxn],tim[n+1],decode[maxn];
+		memset(res,-1,sizeof(res));
+		memset(decode,-1,sizeof(decode));
+		for(int i=1;i<=n;i++)
+		{
+			string s;
+			cin>>s;
+			tim[s[1]-'0']=i;
+		}
+		for(int i=0;i< 1<<n;i++)
+		{
+			char tmp;
+			cin>>tmp;
+			res[i]=tmp-'0';
+		}
+		getchar();//接收回车 
+		int m;
+		cin>>m;
+		while(m--)
+		{
+			for(int i=1;i<=n;i++)
+			{
+				char tmp;
+				cin>>tmp;
+				decode[tim[i]]=tmp-'0';		
+			}
+			int sum=0;
+			for(int i=1;i<=n;i++)
+			{
+				
+				sum+=decode[i]*(1<<(n-i));;		
+			}
+			cout<<res[sum];	
+		}
+		cout<<endl<<endl;
+		
+	}
+	return 0;
+} 
+
+习题6-3
+
+可以参照例题6-10进行，对于树而言，三种遍历方式非常重要，我也将会在第六章进行总结。
+
+#include<iostream>
+#include<string>
+#include<cstring>
+using namespace std;
+const int maxn=1000;
+int lch[maxn];
+int rch[maxn];
+string preorder,inorder;
+int build (int L1,int R1,int L2,int R2)//L1R1为中序遍历，L2R2为先序遍 
+{
+	if(L1>R1) return -1;
+	int root = preorder[L2]-'A';
+	int p=L1;
+	while(inorder[p]-'A'!= root) p++;
+	int cnt=p-L1;//计算左子树的数量 
+	lch[root]=build(L1,p-1,L2+1,L2+cnt-1);
+	rch[root]=build(p+1,R1,L2+cnt+1,R2);
+	return root;
+}
+void postorder(int root)
+{
+ 
+	if(lch[root]!=-1) postorder(lch[root]);
+	if(rch[root]!=-1) postorder(rch[root]);
+	char tmp=root+'A';
+	cout<<tmp;
+	
+}
+int main()
+{
+ 	//freopen("datain.txt","r",stdin);
+ 	string s;
+ 	while(getline(cin,s))
+	{
+		memset(lch,-1,sizeof(lch));
+		memset(rch,-1,sizeof(rch));
+		int index=s.find(" ",0);
+		preorder=s.substr(0,index);
+		inorder=s.substr(index+1,s.length()-index-1);
+		int len1=preorder.length();
+		int len2=inorder.length();
+		int root=build(0,len2-1,0,len1-1);
+		postorder(root);
+		cout<<endl;
+ 		preorder.clear();
+ 		inorder.clear();
+	}
+	return 0;
+} 
+
+习题6-4
+
+本题目使用一次BFS就行。难度不大。为了使用队列方便，除了使用(x,y)坐标表示一个格子外，也将棋盘的左下角开始从左到右，从下到上由0-63进行编号。
+
+#include<iostream>
+#include<string>
+#include<cstring>
+#include<queue>
+using namespace std;
+int main()
+{
+	//freopen("datain.txt","r",stdin);
+	//freopen("dataout.txt","w",stdout);
+	string s;
+	while(getline(cin,s))
+	{
+		int board[9][9],vis[9][9];
+		queue<int> q;
+		int x = s[0]-'a'+1;
+		int y = s[1]-'0';
+		memset(board,-1,sizeof(board));
+		memset(vis,-1,sizeof(vis));
+		board[x][y]=0;
+		vis[x][y]=0;
+		int index= 8*(y-1)+x-1;
+		q.push(index);
+		while(!q.empty())
+		{
+			index= q.front();
+			y = index/8+1;
+			x = index%8+1;
+			q.pop();
+			if(x+2<=8&&y+1<=8&&vis[x+2][y+1]==-1)
+			{
+				board[x+2][y+1]=board[x][y]+1;
+				vis[x+2][y+1]=0;
+				index=8*(y)+x+1;
+				q.push(index);
+			}
+			if(x+1<=8&&y+2<=8&&vis[x+1][y+2]==-1)
+			{
+				board[x+1][y+2]=board[x][y]+1;
+				vis[x+1][y+2]=0;
+				index= 8*(y+1)+x;
+				q.push(index);
+			}
+			if(x+2<=8&&y-1>=1&&vis[x+2][y-1]==-1)
+			{
+				board[x+2][y-1]=board[x][y]+1;
+				vis[x+2][y-1]=0;
+				index= 8*(y-2)+x+1;
+				q.push(index);
+		
+			}
+			if(x+1<=8&&y-2>=1&&vis[x+1][y-2]==-1)
+			{
+				board[x+1][y-2]=board[x][y]+1;
+				vis[x+1][y-2]=0;
+				index= 8*(y-3)+x;
+				q.push(index);
+		
+			}
+			if(x-2>=1&&y-1>=1&&vis[x-2][y-1]==-1)
+			{
+				board[x-2][y-1]=board[x][y]+1;
+				vis[x-2][y-1]=0;
+				index= 8*(y-2)+x-3;
+				q.push(index);
+			}
+			if(x-2>=1&&y+1<=8&&vis[x-2][y+1]==-1)
+			{
+				board[x-2][y+1]=board[x][y]+1;
+				vis[x-2][y+1]=0;
+				index= 8*(y)+x-3;
+				q.push(index);
+			}
+			if(x-1>=1&&y-2>=1&&vis[x-1][y-2]==-1)
+			{
+				board[x-1][y-2]=board[x][y]+1;
+				vis[x-1][y-2]=0;
+				index= 8*(y-3)+x-2;
+				q.push(index);	
+			}
+			if(x-1>=1&&y+2<=8&&vis[x-1][y+2]==-1)
+			{
+				board[x-1][y+2]=board[x][y]+1;
+				vis[x-1][y+2]=0;
+				index= 8*(y+1)+x-2;
+				q.push(index);
+			}
+				
+		}
+		
+		 x = s[3]-'a'+1;
+		 y = s[4]-'0';
+		 cout<<"To get from "<<s[0]<<s[1]<<" to "<< s[3]<<s[4]<<" takes "<<board[x][y]<<" knight moves."<<endl;
+			
+	} 
+	return 0;
+}
+习题6-5
+
+本题目采用BFS，但是不仅要考虑到达每个点的最短距离，还要考虑到到达这个点的时候，剩余的可以连续穿越障碍的步数。这样到达可能出现到达某点的时候，离起点的距离不同，剩余可以连续跨越障碍的不通，但是根据BFS的运行规则，第一个到达终点的肯定就是最短路径的。程序如下，注意队列的清空。
+
+#include<iostream>
+#include<queue>
+#include<cstring>
+using namespace std;
+const int maxn=100;
+struct Node
+{
+	int x,y,d,k;//k存储还能前进几步
+	Node(){};
+	Node(int x1,int y1,int d1,int k1):x(x1),y(y1),d(d1),k(k1){};
+};
+ 
+int row,col,maxk,board[maxn][maxn],vis[maxn][maxn][maxn];
+int dir[4][2]={{1,0},{0,1},{-1,0},{0,-1}};
+queue<Node> q;
+bool legal (int x,int y)
+{
+	return x>=0&&x<row&&y>=0&&y<col;
+}
+int  bfs()
+{
+	while(!q.empty())
+	{
+		Node tmp = q.front();
+		q.pop();
+		if(tmp.x==row-1&&tmp.y==col-1)
+			return tmp.d;
+		for(int i=0;i<4;i++)
+		{
+			int newx= tmp.x+dir[i][0];
+			int newy= tmp.y+dir[i][1];
+			if(legal(newx,newy))
+			{
+				int newk= board[newx][newy]?tmp.k-1:maxk;
+				if(newk>=0&&vis[newx][newy][newk]==-1)
+				{
+					vis[newx][newy][newk]=0;
+					Node NewNode(newx,newy,tmp.d+1,newk);
+					q.push(NewNode);
+				}
+				
+			}
+		}
+	}
+	return -1;	
+}
+int main()
+{
+	//freopen("datain.txt","r",stdin);
+	//freopen("dataout.txt","w",stdout);
+	int n;
+	cin>>n;
+	while(n--)
+	{
+		cin>>row>>col>>maxk;
+		memset(vis,-1,sizeof(vis));
+		for(int i=0;i<row;i++)
+		{
+			for(int j=0;j<col;j++)
+			{
+				cin>>board[i][j];
+			}
+		}
+		while(q.size())q.pop();
+		Node begin(0,0,0,maxk);
+		q.push(begin);
+		int res=bfs();
+		cout<<res<<endl;
+		
+	}	
+	return 0;
+} 
+习题6-6
+
+本题目的思路主要是要通过遍历，知道每个叶子节点的深度。具体思路见点击打开链接。通过学习别人的代码可以采用ios::sync_with_stdio(false);来提升读取速度。
+
+可以使用auto自动推断类型的变量声明，来减少代码的输入量，但是auto在我的机器上测试的有问题。
+
+我将他的代码进行了稍微的注释，以便大家学习。
+
+#include<iostream>
+#include<string>
+#include<map>
+#include<algorithm>
+using namespace std;
+ 
+string line;
+map<long long,int> base;
+int sum;
+void dfs(int depth, int s,int e)
+{
+	if(line[s]=='[')
+	{
+		int p=0;
+		for(int i=s+1;i<e;i++)
+		{
+			if(line[i]=='[') p++;
+			if(line[i]==']') p--;
+			if(p==0&&line[i]==',')
+			//通过逗号，和括号标记P来进行判断自己所在的深度。 
+			{
+				dfs(depth+1,s+1,i-1);
+				dfs(depth+1,i+1,e-1);
+			}
+		}
+	}
+	else 
+	{
+		long long w=0;
+		for(int i=s;i<=e;++i) 
+		w=w*10+line[i]-'0';//将字符转化为数字，并且是从高位从低位读取。 
+		++sum,++base[w<<depth];
+		//并且记录总的节点数量。 
+		//自己的值不变，整个天平能够达到的权重。 
+	}
+}
+int main()
+{
+	//freopen("datain.txt","r",stdin);
+	//freopen("dataout.txt","w",stdout);
+	ios::sync_with_stdio(false);
+	int T;
+	cin>>T;
+	while(T--)
+	{
+		cin>>line;
+		base.clear();
+		sum=0;
+		dfs(0,0,line.size()-1);
+		int maxn=0;
+		for (map<long long,int>::iterator it = base.begin();it!=base.end();it++)
+		maxn=max(maxn,it->second);//找到能够达到相同权重且值不变的节点数量。 
+		cout<<sum-maxn<<endl;
+	}
+} 
+
+
+习题6-7
+
+本题目理解好题意后，发现并没有涉及到图和树，对于树而言，我们可以看成是一个一对多的关系，图时一个多对多的关系。而对于题目中的一个trans，
+
+可能有多个输入和输出，采用树或者图的方式处理显然不是太好。那么设置一个结构体存储trans。trans包含输出的place和需要从这个place，token的数量。
+
+结构体中的数据采用in[place]=token数量的方式存储这些信息，再进行处理。
+
+#include<iostream> 
+#include<map>
+#include<cstring>
+using namespace std;
+const int maxn = 100;
+struct trans
+{
+	int in[maxn],out[maxn];
+};
+int findtrans(trans T[],int token[],int NT,int NP)
+{
+ 
+	for (int i=0;i<NT;i++)
+	{	
+		int flag=0;
+		for (int j=1;j<=NP;j++)
+		{
+			if(token[j]<T[i].in[j])
+			{
+				flag=1;
+				break;	
+			}
+		}
+		if(!flag)
+			return i;
+	}
+	return -1;
+}
+		
+int main()
+{
+	ios::sync_with_stdio(false);
+	//freopen("datain.txt","r",stdin);
+	//freopen("dataout.txt","w",stdout);    
+	int NP,NT,NF,token[maxn],rnd=1;
+	trans T[maxn];
+	while (cin>>NP&&NP)
+	{
+		memset(token,0,sizeof(token));
+		for(int i=1;i<=NP;i++)
+		{
+			cin>>token[i];
+		}
+		cin>>NT;
+		for(int i=0;i<NT;i++)
+		{
+			for(int j=0;j<=NP;j++)
+			{
+				T[i].in[j]=0;
+				T[i].out[j]=0;
+			}
+			int tmp;
+			while(cin>>tmp&&tmp)
+			{
+				if(tmp<0)
+				{
+					T[i].in[-tmp]++;
+				}
+				else
+				{
+					T[i].out[tmp]++;
+				}
+			
+			}
+		}
+		cin>>NF;
+		int flag=0,dead=0;
+		for(int i=1;i<=NF;i++)
+		{
+			int ex = findtrans(T,token,NT,NP);
+			if (ex!=-1)
+			{
+				for (int i=1;i<=NP;i++)
+				{
+					if(T[ex].in[i]!=0)
+					token[i]-=T[ex].in[i];
+					if(T[ex].out[i]!=0)
+					token[i]+=T[ex].out[i];
+				}
+				
+				dead++;
+			}
+			else
+			{
+				flag=1;
+				break;
+			}	
+		}
+		if(!flag)
+		{
+			cout<<"Case "<<rnd++<<": still live after "<<NF<<" transitions"<<endl;
+		}
+		else
+		{
+			cout<<"Case "<<rnd++<<": dead after "<<dead<<" transitions"<<endl;	
+		}
+		cout<<"Places with tokens:";
+		for(int i=1;i<=NP;i++)
+		{
+			if(token[i]>0)
+			cout<<" "<<i<<" ("<< token[i] <<")";
+		}
+		cout<<endl<<endl;	
+	}
+	
+	return 0;
+}
+
+习题6-8
+
+本题就是一个DFS，主要递归要用的变量和结束的条件。输出格式相当烦人。
+
+#include<iostream>
+#include<algorithm>
+#include<cmath>
+#include<cstring>
+using namespace std;
+const int maxn=1000;
+int G[maxn][maxn],res[maxn],lenres=0,route[maxn],routlen=0;
+ 
+int  allblack(int sr,int er,int sc,int ec)
+{
+	for(int i=sr;i<=er;i++)
+	{
+		for(int j=sc;j<=ec;j++)
+		{
+			if(G[i][j]!=1)
+			{
+				return 0;
+			}
+		}
+	}
+	return 1;	
+}
+void solve(int sr,int er,int sc,int ec,int depth,int index,int sum)
+{
+	int flag;
+	if(sr>er||sc>ec)
+	{
+		return ;
+	}
+	if(sr==er&&sc==ec)
+	{
+		flag=allblack(sr,er,sc,ec);
+		if(flag)
+		{
+		sum=sum+index*pow(5,depth);
+		res[lenres++]=sum;
+		}
+		return;
+	}
+	flag=allblack(sr,er,sc,ec);
+	if(flag)
+	{
+		sum=sum+index*pow(5,depth);
+		res[lenres++]=sum;
+		return;
+	}
+	else
+	{
+		
+		int midr = sr+(er-sr)/2;
+		int midc = sc+(ec-sc)/2;
+		if(depth>=0)
+		sum=sum+index*pow(5,depth);
+		solve(sr,midr,sc,midc,depth+1,1,sum);
+		solve(sr,midr,midc+1,ec,depth+1,2,sum);
+		solve(midr+1,er,sc,midc,depth+1,3,sum);
+		solve(midr+1,er,midc+1,ec,depth+1,4,sum);	
+	}
+ 
+	
+}
+void locate(int &sr,int &er,int &sc,int &ec,int index)
+{
+		int midr = sr+(er-sr)/2;
+		int midc = sc+(ec-sc)/2;
+	if(index==1)
+	{
+		er=midr;
+		ec=midc;
+		
+	}
+	if(index==2)
+	{
+		er=midr;
+		sc=midc+1;
+		
+	}
+	if(index==3)
+	{
+		sr=midr+1;
+		ec=midc;
+	}
+	if(index==4)
+	{
+		sr=midr+1;
+		sc=midc+1;
+	}
+	
+}
+ 
+ 
+ 
+void fillone(int n)
+{
+	int sr=0,er=n-1,sc=0,ec=n-1; 
+	for (int i=0;i<routlen;i++)
+	{
+		locate(sr,er,sc,ec,route[i]);
+	}
+	for(int i=sr;i<=er;i++)
+		for(int j=sc;j<=ec;j++)
+			G[i][j]=1; 
+}
+ 
+ 
+int main()
+{
+	
+	//freopen("datain.txt","r",stdin);
+	//freopen("dataout.txt","w",stdout);
+	int n,rnd=1;
+	while(cin>>n&&n)
+	{
+		if(rnd!=1)
+		{
+			cout<<endl;
+		}
+		cout<<"Image "<<rnd++<<endl;
+		lenres=0;
+		if(n>0)
+		{
+			char c;
+			c=getchar();
+			for(int i=0;i<n;i++)
+			{
+				for(int j=0;j<n;j++)
+				{	
+					c=getchar();
+					G[i][j]=c-'0';
+				}	
+				c=getchar();
+			}				
+			solve(0,n-1,0,n-1,-1,0,0);		
+			sort(res,res+lenres);
+			for(int i=0;i<lenres;i++)
+			{
+				cout<<res[i];
+				if((i+1)%12==0)
+				cout<<endl; 
+				else if(i!=lenres-1)
+				cout<<" ";
+			}
+			if(lenres%12!=0)
+			cout<<endl;
+			cout<<"Total number of black nodes = "<<lenres<<endl;	
+		}
+		else
+		{
+			n=-n;
+			memset(G,0,sizeof(G));
+			int tmp;
+			while(cin>>tmp&&tmp!=-1)
+			{
+				memset(route,0,sizeof(route));
+				routlen=0;
+				while (tmp!=0)
+				{
+					route[routlen++] = tmp%5;
+					tmp = tmp/5;
+				}
+				fillone(n);		
+			}
+			for(int i=0;i<n;i++)
+			{
+				for(int j=0;j<n;j++)
+				{
+					if(G[i][j]==0)
+					cout<<".";
+					else
+					cout<<"*";
+				}
+				cout<<endl;
+			}	
+		}
+	}
+	return 0;
+} 
